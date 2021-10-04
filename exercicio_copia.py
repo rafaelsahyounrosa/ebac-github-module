@@ -7,10 +7,9 @@ import concurrent.futures
 
 from bs4 import BeautifulSoup
 
-# global headers to be used for requests
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
-MAX_THREADS = 10
+MAX_THREADS = 20
 
 
 def extract_movie_details(movie_link):
@@ -22,19 +21,18 @@ def extract_movie_details(movie_link):
         title = None
         date = None
 
-        movie_data = movie_soup.find('div', attrs={'class': 'title_wrapper'})
+        movie_data = movie_soup.find('section', attrs={'class': 'ipc-page-section ipc-page-section--baseAlt ipc-page-section--tp-xs ipc-page-section--bp-xs Hero__HeroParent-kvkd64-1 fARFJI'})
         if movie_data is not None:
             title = movie_data.find('h1').get_text()
-            date = movie_data.find('a', attrs={'title': 'See more release dates'}).get_text().strip()
+            date = movie_data.find('a', attrs={'class': 'ipc-link ipc-link--baseAlt ipc-link--inherit-color TitleBlockMetaData__StyledTextLink-sc-12ein40-1 rgaOW'}).get_text().strip()
 
-        rating = movie_soup.find('span', attrs={'itemprop': 'ratingValue'}).get_text() if movie_soup.find(
-            'span', attrs={'itemprop': 'ratingValue'}) else None
+            rating = movie_soup.find('span', attrs={'class': 'AggregateRatingButton__RatingScore-sc-1ll29m0-1 iTLWoV'}).get_text()
 
-        plot_text = movie_soup.find('div', attrs={'class': 'summary_text'}).get_text().strip() if movie_soup.find(
-            'div', attrs={'class': 'summary_text'}) else None
+            plot_text = movie_soup.find('span', attrs={'class': 'GenresAndPlot__TextContainerBreakpointXL-cum89p-2 gCtawA'}).get_text().strip()
 
         with open('movies.csv', mode='a') as file:
             movie_writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            movie_writer.writerow(['title','date','rating','plot_text'])
             if all([title, date, rating, plot_text]):
                 print(title, date, rating, plot_text)
                 movie_writer.writerow([title, date, rating, plot_text])
@@ -54,7 +52,7 @@ def main():
     start_time = time.time()
 
     # IMDB Most Popular Movies - 100 movies
-    popular_movies_url = 'https://www.imdb.com/chart/moviemeter/?ref_=nv_mv_mpm'
+    popular_movies_url = 'https://www.imdb.com/chart/moviemeter/'
     response = requests.get(popular_movies_url, headers=headers)
     soup = BeautifulSoup(response.content, 'html.parser')
 
